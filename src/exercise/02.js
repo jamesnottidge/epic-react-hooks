@@ -3,24 +3,38 @@
 
 import * as React from 'react'
 
-const useLocalStorageState = (itemName, initializer) => {
-  if (!itemName) throw new Error('You must provide an itemName')
-  const [state, setState] = React.useState(
-    () => window.localStorage.getItem(`${itemName}`) ?? initializer,
-  )
+const useLocalStorageState = (
+  key,
+  initializer = '',
+  {serialize = JSON.stringify, deserialize = JSON.parse} = {},
+) => {
+  if (!key) throw new Error('You must provide an key')
+  const [state, setState] = React.useState(() => {
+    const valueInLocalStorage = window.localStorage.getItem(`${key}`)
+    if (valueInLocalStorage) {
+      return deserialize(valueInLocalStorage)
+    }
+    return typeof initializer === 'function' ? initializer() : initializer
+  })
 
-  const setLocalStorageState = value => {
-    window.localStorage.setItem(`${itemName}`, value)
-    setState(value)
-  }
+  const prevKeyRef = React.useRef(key)
 
-  return [state, setLocalStorageState]
+  React.useEffect(() => {
+    const prevKey = prevKeyRef.current
+    if (prevKey !== key) {
+      window.localStorage.removeItem(prevKey)
+    }
+    prevKeyRef.current = key
+    window.localStorage.setItem(key, serialize(state))
+  }, [key, serialize, state])
+
+  return [state, setState]
 }
 
 function Greeting({initialName = ''}) {
   // 🐨 initialize the state to the value from localStorage
   // 💰 window.localStorage.getItem('name') ?? initialName
-  const [name, setName] = useLocalStorageState()
+  const [name, setName] = useLocalStorageState('name ')
 
   // 🐨 Here's where you'll use `React.useEffect`.
   // The callback should set the `name` in localStorage.
