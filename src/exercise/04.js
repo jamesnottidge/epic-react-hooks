@@ -7,10 +7,16 @@ import {useLocalStorageState} from '../utils'
 
 function Board() {
   // 🐨 squares is the state for this component. Add useState for squares
-  const [squares, setSquares] = useLocalStorageState(
-    'squares',
-    Array(9).fill(null),
-  )
+  //   const [squares, setSquares] = useLocalStorageState(
+  //     'squares',
+  //     Array(9).fill(null),
+  //   )
+  //   const [historyArray, setHistoryArray] = useLocalStorageState('history', [
+  //     Array(9).fill(null),
+  //   ])
+
+  const [squares, setSquares] = useState(Array(9).fill(null))
+  const [historyArray, setHistoryArray] = useState([Array(9).fill(null)])
 
   // 🐨 We'll need the following bits of derived state:
   // - nextValue ('X' or 'O')
@@ -46,7 +52,7 @@ function Board() {
 
     const squaresCopy = [...squares]
     squaresCopy[square] = nextValue
-    historyArray.push(squaresCopy)
+    setHistoryArray(historyArray => [...historyArray, squaresCopy])
     setSquares(squaresCopy)
   }
 
@@ -54,6 +60,12 @@ function Board() {
     // 🐨 reset the squares
     // 💰 `Array(9).fill(null)` will do it!
     setSquares(Array(9).fill(null))
+    setHistoryArray(historyArray => [Array(9).fill(null)])
+  }
+
+  const onHistoryClick = index => {
+    setSquares([...historyArray[index]])
+    historyArray.length = index + 1
   }
 
   function renderSquare(i) {
@@ -63,8 +75,6 @@ function Board() {
       </button>
     )
   }
-
-  const historyArray = [Array(9).fill(null)]
 
   return (
     <div>
@@ -91,10 +101,15 @@ function Board() {
       <div>
         {historyArray.map((historyItem, index) => {
           return (
-            <button>
-              {index + 1}.{' '}
-              {index === 0 ? 'Go to game Start' : `Go to move #${index}`}
-            </button>
+            <div key={index}>
+              <button onClick={() => onHistoryClick(index)}>
+                {index + 1}.{' '}
+                {index === 0 ? 'Go to game Start' : `Go to move #${index}`}
+                {JSON.stringify(historyArray[index]) === JSON.stringify(squares)
+                  ? '(current)'
+                  : null}
+              </button>
+            </div>
           )
         })}
       </div>
